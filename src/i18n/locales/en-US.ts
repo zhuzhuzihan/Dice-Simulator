@@ -9,8 +9,7 @@ export default {
     buttonAnimation: 'Button Animation',
     moveButton: 'Move Button',
     hideButton: 'Hide Button',
-    particleIntensity: 'Particle Intensity',
-    adjustParticleEffect: 'Adjust particle effect strength',
+
     rollDuration: 'Roll Duration',
     low: 'Low',
     high: 'High',
@@ -19,7 +18,13 @@ export default {
     language: 'Language',
     chooseLanguage: 'Choose Language',
     chooseButtonBehavior: 'Choose button behavior during roll',
-    setRollDuration: 'Set roll animation duration (1-10 seconds)'
+    setRollDuration: 'Set roll animation duration (1-10 seconds)',
+    easingType: 'Easing Type',
+    linear: 'Linear',
+    quadratic: 'Quadratic',
+    exponential: 'Exponential',
+    sine: 'Sine',
+    chooseEasingType: 'Choose animation easing type'
   },
   diceTypes: {
     d4: 'D4',

@@ -22,7 +22,7 @@ export default function Home() {
     20: []
   }));
   const [isRolling, setIsRolling] = useState(false);
-  const [settings] = useState(() => {
+  const [settings, setSettings] = useState(() => {
     const savedSettings = localStorage.getItem('diceSettings');
     return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
   });
@@ -38,7 +38,7 @@ export default function Home() {
     setResult(null);
     
     // Generate rolling animation numbers (100 numbers for animation)
-    const numbers: any[] | ((prevState: number[]) => number[]) = [];
+    const numbers = [];
     for (let i = 0; i < 100; i++) {
       numbers.push(generateRandomNumber(diceType));
     }
@@ -49,25 +49,37 @@ export default function Home() {
     const duration = settings.rollDuration * 1000;
     let lastFrameTime = startTime;
     let animationFrameId: number;
-    let isFinalPhase = false;
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Calculate dynamic interval (50ms to 300ms)
-      let interval = 50;
+      // Calculate dynamic interval using easing function
+      let interval = 40; // Faster initial speed
       if (duration >= 4000) {
-        if (duration - elapsed <= 500) {
-          // Final 0.5 seconds phase
-          if (!isFinalPhase) {
-            isFinalPhase = true;
-            interval = 300;
-          }
-        } else {
-          // Gradually increase interval from 50ms to 300ms
-          const phaseProgress = Math.min(elapsed / (duration - 500), 1);
-          interval = 50 + (250 * phaseProgress);
+        const t = progress;
+        let easingProgress = 0;
+        
+        switch (settings.easingType) {
+          case 'linear':
+            // 线性减速公式: v(t) = v0 - (v0/T)*t
+            // 映射到40ms到300ms区间
+            interval = 40 + (260 * t);
+            break;
+          case 'quadratic':
+            easingProgress = t * (2 - t); // Ease Out Quad
+            interval = 40 + (260 * easingProgress);
+            break;
+          case 'exponential':
+            easingProgress = 1 - Math.pow(2, -10 * t); // Ease Out Expo
+            interval = 40 + (260 * easingProgress);
+            break;
+          case 'sine':
+            easingProgress = Math.sin(t * Math.PI / 2); // Ease Out Sine
+            interval = 40 + (260 * easingProgress);
+            break;
+          default:
+            interval = 40 + (260 * t); // 默认使用线性减速
         }
       }
 
@@ -134,8 +146,9 @@ export default function Home() {
                   transition={{ duration: 0.2 }}
                   className={cn(
                     "text-8xl font-orbitron font-bold",
-                    diceType === 4 ? 'text-[#00F5FF]' : 
-                    diceType === 6 ? 'text-[#00FF9D]' : 'text-[#FF00F5]'
+                    diceType === 4 ? 'text-[#3b82f6]' : 
+                    diceType === 6 ? 'text-[#10b981]' : 
+                    diceType === 16 ? 'text-[#ec4899]' : 'text-[#f97316]'
                   )}
                 >
                   {rollingNumbers[currentIndex] || rollingNumbers[0]}
@@ -147,8 +160,9 @@ export default function Home() {
                   animate={{ scale: 1, opacity: 1 }}
                   className={cn(
                     "text-8xl font-orbitron font-bold",
-                    diceType === 4 ? 'text-[#00F5FF]' : 
-                    diceType === 6 ? 'text-[#00FF9D]' : 'text-[#FF00F5]'
+                    diceType === 4 ? 'text-[#3b82f6]' : 
+                    diceType === 6 ? 'text-[#10b981]' : 
+                    diceType === 16 ? 'text-[#ec4899]' : 'text-[#f97316]'
                   )}
                 >
                   {result}

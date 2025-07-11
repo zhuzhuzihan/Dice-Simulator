@@ -192,7 +192,7 @@ export default function Settings() {
             </div>
           </motion.div>
 
-          {/* Particle intensity */}
+          {/* Easing Type */}
           <motion.div 
             whileHover={{ scale: 1.02 }}
             className={cn(
@@ -203,30 +203,71 @@ export default function Settings() {
           >
             <div className="space-y-4">
               <div>
-                <h3 className="font-orbitron text-lg text-[#00FF9D]">{t('common.particleIntensity')}</h3>
-                <p className="text-gray-400">{t('common.adjustParticleEffect')}</p>
+                <h3 className="font-orbitron text-lg text-[#00FF9D]">{t('common.easingType')}</h3>
+                <p className="text-gray-400">{t('common.chooseEasingType')}</p>
               </div>
-              <div className="space-y-2">
-                 <input
-                   type="range"
-                   min="0"
-                   max="100"
-                   value={settings.particleIntensity}
-                   onChange={handleIntensityChange}
-                   className={cn(
-                     "w-full h-2 rounded-full appearance-none",
-                     "bg-gradient-to-r from-[#121212] via-[#00F5FF] to-[#FF00F5]",
-                     "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white"
-                   )}
-                 />
-                 <div className="flex justify-between text-xs text-gray-400">
-                   <span>{t('common.low')}</span>
-                   <span className="font-orbitron text-[#FF00F5]">{settings.particleIntensity}%</span>
-                   <span>{t('common.high')}</span>
-                 </div>
-              </div>
+              <div className="flex flex-col gap-3">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="easingType" 
+                      value="linear" 
+                      checked={settings.easingType === 'linear'}
+                      onChange={() => {
+                        const newSettings = {...settings, easingType: 'linear'};
+                        setSettings(newSettings);
+                      }}
+                      className="accent-[#00F5FF]"
+                    />
+                    <span>线性减速</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="easingType" 
+                      value="quadratic" 
+                      checked={settings.easingType === 'quadratic'}
+                      onChange={() => {
+                        const newSettings = {...settings, easingType: 'quadratic'};
+                        setSettings(newSettings);
+                      }}
+                      className="accent-[#00F5FF]"
+                    />
+                    <span>{t('common.quadratic')}</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="easingType" 
+                      value="exponential" 
+                      checked={settings.easingType === 'exponential'}
+                      onChange={() => {
+                        const newSettings = {...settings, easingType: 'exponential'};
+                        setSettings(newSettings);
+                      }}
+                      className="accent-[#00F5FF]"
+                    />
+                    <span>{t('common.exponential')}</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="easingType" 
+                      value="sine" 
+                      checked={settings.easingType === 'sine'}
+                      onChange={() => {
+                        const newSettings = {...settings, easingType: 'sine'};
+                        setSettings(newSettings);
+                      }}
+                      className="accent-[#00F5FF]"
+                    />
+                    <span>{t('common.sine')}</span>
+                  </label>
+               </div>
             </div>
-           </motion.div>
+          </motion.div>
+
+
 
           {/* Roll duration setting */}
           <motion.div 

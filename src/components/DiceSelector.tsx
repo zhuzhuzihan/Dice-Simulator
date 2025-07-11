@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 import { useI18n } from '@/i18n/useI18n';
 
 type DiceSelectorProps = {
@@ -28,10 +27,10 @@ export default function DiceSelector({ diceType, setDiceType, disabled }: DiceSe
   }, []);
 
   const diceOptions = [
-    { value: 4, label: t('diceTypes.d4'), color: 'from-[#00F5FF] to-[#00A8FF]' },
-    { value: 6, label: t('diceTypes.d6'), color: 'from-[#00FF9D] to-[#00CC7A]' },
-    { value: 16, label: t('diceTypes.d16'), color: 'from-[#FF00F5] to-[#CC00CC]' },
-    { value: 20, label: t('diceTypes.d20'), color: 'from-[#FFA500] to-[#FF6347]' }
+    { value: 4, label: t('diceTypes.d4'), color: 'from-[#3b82f6] to-[#2563eb]' },
+    { value: 6, label: t('diceTypes.d6'), color: 'from-[#10b981] to-[#059669]' },
+    { value: 16, label: t('diceTypes.d16'), color: 'from-[#ec4899] to-[#db2777]' },
+    { value: 20, label: t('diceTypes.d20'), color: 'from-[#f97316] to-[#ea580c]' }
   ];
 
   if (isMobile) {

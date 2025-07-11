@@ -1,9 +1,9 @@
 export function getDiceColor(type: 4 | 6 | 16 | 20): string {
   switch (type) {
-    case 4: return '#00F5FF';
-    case 6: return '#00FF9D';
-    case 16: return '#FF00F5';
-    case 20: return '#FFA500';
+    case 4: return '#3b82f6';
+    case 6: return '#10b981';
+    case 16: return '#ec4899';
+    case 20: return '#f97316';
     default: return '#FFFFFF';
   }
 }
@@ -22,9 +22,17 @@ export function generateRandomNumber(type: 4 | 6 | 16 | 20): number {
   return Math.floor(Math.random() * type) + 1;
 }
 
+// Easing functions
+export const EASING_FUNCTIONS = {
+  linear: (t: number) => t,
+  quadratic: (t: number) => t * (2 - t),
+  exponential: (t: number) => 1 - Math.pow(2, -10 * t),
+  sine: (t: number) => Math.sin(t * Math.PI / 2)
+};
+
 // Default settings
 export const DEFAULT_SETTINGS = {
-  particleIntensity: 50,
   buttonAnimation: 'move', // 'move' or 'hide'
-  rollDuration: 5 // 1-10 seconds
+  rollDuration: 5, // 1-10 seconds
+  easingType: 'linear' // 'linear', 'quadratic', 'exponential', 'sine'
 };
