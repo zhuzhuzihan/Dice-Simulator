@@ -24,7 +24,8 @@ export default {
   diceTypes: {
     d4: 'D4',
     d6: 'D6',
-    d16: 'D16'
+    d16: 'D16',
+    d20: 'D20'
   },
   errors: {
     invalidInteger: 'Please enter an integer between 1-10',

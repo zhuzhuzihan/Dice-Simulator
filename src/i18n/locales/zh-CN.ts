@@ -24,7 +24,8 @@ export default {
   diceTypes: {
     d4: '四面骰',
     d6: '六面骰',
-    d16: '十六面骰'
+    d16: '十六面骰',
+    d20: '二十面骰'
   },
   errors: {
     invalidInteger: '请输入1-10之间的整数',

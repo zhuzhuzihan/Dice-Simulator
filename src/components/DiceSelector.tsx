@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import { useI18n } from '@/i18n/useI18n';
 
 type DiceSelectorProps = {
-  diceType: 4 | 6 | 16;
-  setDiceType: (type: 4 | 6 | 16) => void;
+  diceType: 4 | 6 | 16 | 20;
+  setDiceType: (type: 4 | 6 | 16 | 20) => void;
   disabled: boolean;
 };
 
@@ -30,7 +30,8 @@ export default function DiceSelector({ diceType, setDiceType, disabled }: DiceSe
   const diceOptions = [
     { value: 4, label: t('diceTypes.d4'), color: 'from-[#00F5FF] to-[#00A8FF]' },
     { value: 6, label: t('diceTypes.d6'), color: 'from-[#00FF9D] to-[#00CC7A]' },
-    { value: 16, label: t('diceTypes.d16'), color: 'from-[#FF00F5] to-[#CC00CC]' }
+    { value: 16, label: t('diceTypes.d16'), color: 'from-[#FF00F5] to-[#CC00CC]' },
+    { value: 20, label: t('diceTypes.d20'), color: 'from-[#FFA500] to-[#FF6347]' }
   ];
 
   if (isMobile) {

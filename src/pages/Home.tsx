@@ -8,7 +8,7 @@ import useSound from 'use-sound';
 import { generateRandomNumber, DEFAULT_SETTINGS } from '@/lib/diceUtils';
 import { useI18n } from '@/i18n/useI18n';
 
-type DiceType = 4 | 6 | 16;
+type DiceType = 4 | 6 | 16 | 20;
 
 export default function Home() {
   const navigate = useNavigate();
@@ -16,7 +16,12 @@ export default function Home() {
   
   const [diceType, setDiceType] = useState<DiceType>(6);
   const [result, setResult] = useState<number | null>(null);
-  const [history, setHistory] = useState<number[]>([]);
+  const [history, setHistory] = useState<Record<DiceType, number[]>>(() => ({
+    4: [],
+    6: [],
+    16: [],
+    20: []
+  }));
   const [isRolling, setIsRolling] = useState(false);
   const [settings, setSettings] = useState(() => {
     const savedSettings = localStorage.getItem('diceSettings');
@@ -33,7 +38,7 @@ export default function Home() {
     setIsRolling(true);
     setResult(null);
     
-    // Generate rolling animation numbers (100 numbers for 5s animation at 50ms intervals)
+    // Generate rolling animation numbers (100 numbers for animation)
     const numbers = [];
     for (let i = 0; i < 100; i++) {
       numbers.push(generateRandomNumber(diceType));
@@ -41,31 +46,59 @@ export default function Home() {
     setRollingNumbers(numbers);
     setCurrentIndex(0);
     
-    // Start animation with 50ms interval
-    const startTime = Date.now();
-    const intervalId = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / (settings.rollDuration * 1000), 1);
-      const newIndex = Math.floor(progress * numbers.length);
-      
-      setCurrentIndex(newIndex);
+    const startTime = performance.now();
+    const duration = settings.rollDuration * 1000;
+    let lastFrameTime = startTime;
+    let animationFrameId: number;
+    let isFinalPhase = false;
 
-      console.log(`Animation progress: ${(progress * 100).toFixed(1)}%`, numbers[newIndex]);
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
       
-      if (progress >= 1) {
-        clearInterval(intervalId);
+      // Calculate dynamic interval (50ms to 300ms)
+      let interval = 50;
+      if (duration >= 4000) {
+        if (duration - elapsed <= 500) {
+          // Final 0.5 seconds phase
+          if (!isFinalPhase) {
+            isFinalPhase = true;
+            interval = 300;
+          }
+        } else {
+          // Gradually increase interval from 50ms to 300ms
+          const phaseProgress = Math.min(elapsed / (duration - 500), 1);
+          interval = 50 + (250 * phaseProgress);
+        }
+      }
+
+      if (currentTime - lastFrameTime >= interval) {
+        const newIndex = Math.floor(progress * numbers.length);
+        setCurrentIndex(newIndex);
+        lastFrameTime = currentTime;
+        console.log(`Animation progress: ${(progress * 100).toFixed(1)}%`, numbers[newIndex]);
+      }
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      } else {
         // Final result
         const rollResult = generateRandomNumber(diceType);
         console.log('Animation completed with result:', rollResult);
-        setResult(rollResult);
-        setHistory(prev => [rollResult, ...prev].slice(0, 5));
+         setResult(rollResult);
+         setHistory(prev => ({
+           ...prev,
+           [diceType]: [rollResult, ...prev[diceType]].slice(0, 5)
+         }));
         setIsRolling(false);
       }
-    }, 50);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
     
     return () => {
-      console.log('Cleaning up animation interval');
-      clearInterval(intervalId);
+      console.log('Cleaning up animation');
+      cancelAnimationFrame(animationFrameId);
     };
   };
 
