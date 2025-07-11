@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DiceSelector from '@/components/DiceSelector';
 import ResultDisplay from '@/components/ResultDisplay';
 import { cn } from '@/lib/utils';
-import useSound from 'use-sound';
 import { generateRandomNumber, DEFAULT_SETTINGS } from '@/lib/diceUtils';
 import { useI18n } from '@/i18n/useI18n';
 
@@ -23,7 +22,7 @@ export default function Home() {
     20: []
   }));
   const [isRolling, setIsRolling] = useState(false);
-  const [settings, setSettings] = useState(() => {
+  const [settings] = useState(() => {
     const savedSettings = localStorage.getItem('diceSettings');
     return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
   });
@@ -39,7 +38,7 @@ export default function Home() {
     setResult(null);
     
     // Generate rolling animation numbers (100 numbers for animation)
-    const numbers = [];
+    const numbers: any[] | ((prevState: number[]) => number[]) = [];
     for (let i = 0; i < 100; i++) {
       numbers.push(generateRandomNumber(diceType));
     }
