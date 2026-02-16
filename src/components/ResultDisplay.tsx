@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/i18n/useI18n';
+import { getDiceColor } from '@/lib/diceUtils';
 
 type ResultDisplayProps = {
   result: number | null;
@@ -10,26 +11,16 @@ type ResultDisplayProps = {
 export default function ResultDisplay({ result, history, diceType }: ResultDisplayProps) {
   const { t } = useI18n();
   
-   const getTextColor = () => {
-    switch (diceType) {
-      case 4: return 'text-[#00F5FF]';
-      case 6: return 'text-[#00FF9D]';
-      case 16: return 'text-[#FF00F5]';
-      case 20: return 'text-[#FFA500]';
-      default: return 'text-white';
-    }
-  };
+  const diceColor = getDiceColor(diceType);
 
   return (
     <div className="w-full max-w-md">
       <div className="flex flex-col items-center gap-4">
         {result !== null && (
-          <div className={cn(
-            "text-6xl font-orbitron font-bold",
-            getTextColor(),
-            "text-center",
-            "animate-bounce"
-          )}>
+          <div 
+            className="text-6xl font-orbitron font-bold text-center animate-bounce"
+            style={{ color: diceColor }}
+          >
             {result}
           </div>
         )}
@@ -40,13 +31,16 @@ export default function ResultDisplay({ result, history, diceType }: ResultDispl
             <div className="flex justify-center gap-2">
               {history[diceType].map((roll, index) => (
                 <div 
-                  key={index}
+                  key={`${roll}-${index}`}
                   className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center",
                     "font-orbitron font-bold",
-                    getTextColor(),
-                    "border border-current"
+                    "border"
                   )}
+                  style={{ 
+                    color: diceColor,
+                    borderColor: diceColor 
+                  }}
                 >
                   {roll}
                 </div>

@@ -26,7 +26,7 @@ export default function DiceSelector({ diceType, setDiceType, disabled }: DiceSe
     };
   }, []);
 
-  const diceOptions = [
+  const diceOptions: { value: 4 | 6 | 16 | 20; label: string; color: string }[] = [
     { value: 4, label: t('diceTypes.d4'), color: 'from-[#3b82f6] to-[#2563eb]' },
     { value: 6, label: t('diceTypes.d6'), color: 'from-[#10b981] to-[#059669]' },
     { value: 16, label: t('diceTypes.d16'), color: 'from-[#ec4899] to-[#db2777]' },

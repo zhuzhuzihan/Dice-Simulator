@@ -20,7 +20,7 @@ export default {
     chooseButtonBehavior: '选择投掷时按钮行为',
     setRollDuration: '设置投掷动画时长(1-10秒)',
     easingType: '缓动类型',
-    linear: '线性减速',
+    linear: '线性',
     quadratic: '二次缓动',
     exponential: '指数缓动',
     sine: '正弦缓动',

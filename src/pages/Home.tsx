@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DiceSelector from '@/components/DiceSelector';
 import ResultDisplay from '@/components/ResultDisplay';
 import { cn } from '@/lib/utils';
-import { generateRandomNumber, DEFAULT_SETTINGS } from '@/lib/diceUtils';
+import { generateRandomNumber, DEFAULT_SETTINGS, getDiceColor } from '@/lib/diceUtils';
 import { useI18n } from '@/i18n/useI18n';
 
 type DiceType = 4 | 6 | 16 | 20;
@@ -22,96 +22,98 @@ export default function Home() {
     20: []
   }));
   const [isRolling, setIsRolling] = useState(false);
-  const [settings, setSettings] = useState(() => {
+  const [settings] = useState(() => {
     const savedSettings = localStorage.getItem('diceSettings');
     return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
   });
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [rollingNumbers, setRollingNumbers] = useState<number[]>([]);
+  
+  // 使用 ref 存储动画帧 ID，确保可以正确清理
+  const animationFrameRef = useRef<number | null>(null);
 
-  const rollDice = () => {
+  // 组件卸载时清理动画帧
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  const rollDice = useCallback(() => {
     if (isRolling) return;
     
-    console.log('Starting dice roll animation...');
+    // 清理之前的动画帧
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    
     setIsRolling(true);
     setResult(null);
     
-    // Generate rolling animation numbers (100 numbers for animation)
-    const numbers = [];
-    for (let i = 0; i < 100; i++) {
-      numbers.push(generateRandomNumber(diceType));
-    }
+    // 生成动画数字序列
+    const numbers = Array.from({ length: 100 }, () => generateRandomNumber(diceType));
     setRollingNumbers(numbers);
     setCurrentIndex(0);
     
     const startTime = performance.now();
     const duration = settings.rollDuration * 1000;
     let lastFrameTime = startTime;
-    let animationFrameId: number;
+    let currentDisplayIndex = 0;
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Calculate dynamic interval using easing function
-      let interval = 40; // Faster initial speed
-      if (duration >= 4000) {
-        const t = progress;
-        let easingProgress = 0;
-        
-        switch (settings.easingType) {
-          case 'linear':
-            // 线性减速公式: v(t) = v0 - (v0/T)*t
-            // 映射到40ms到300ms区间
-            interval = 40 + (260 * t);
-            break;
-          case 'quadratic':
-            easingProgress = t * (2 - t); // Ease Out Quad
-            interval = 40 + (260 * easingProgress);
-            break;
-          case 'exponential':
-            easingProgress = 1 - Math.pow(2, -10 * t); // Ease Out Expo
-            interval = 40 + (260 * easingProgress);
-            break;
-          case 'sine':
-            easingProgress = Math.sin(t * Math.PI / 2); // Ease Out Sine
-            interval = 40 + (260 * easingProgress);
-            break;
-          default:
-            interval = 40 + (260 * t); // 默认使用线性减速
-        }
-      }
+      // 使用缓动函数计算间隔时间 (从 40ms 逐渐增加到 300ms)
+      const easedProgress = getEasedProgress(progress, settings.easingType);
+      const interval = 40 + (260 * easedProgress);
 
       if (currentTime - lastFrameTime >= interval) {
-        const newIndex = Math.floor(progress * numbers.length);
-        setCurrentIndex(newIndex);
+        currentDisplayIndex = Math.min(currentDisplayIndex + 1, numbers.length - 1);
+        setCurrentIndex(currentDisplayIndex);
         lastFrameTime = currentTime;
-        console.log(`Animation progress: ${(progress * 100).toFixed(1)}%`, numbers[newIndex]);
       }
 
       if (progress < 1) {
-        animationFrameId = requestAnimationFrame(animate);
+        animationFrameRef.current = requestAnimationFrame(animate);
       } else {
-        // Final result
+        // 动画结束，生成最终结果
         const rollResult = generateRandomNumber(diceType);
-        console.log('Animation completed with result:', rollResult);
-         setResult(rollResult);
-         setHistory(prev => ({
-           ...prev,
-           [diceType]: [rollResult, ...prev[diceType]].slice(0, 5)
-         }));
+        setResult(rollResult);
+        setHistory(prev => ({
+          ...prev,
+          [diceType]: [rollResult, ...prev[diceType]].slice(0, 5)
+        }));
         setIsRolling(false);
+        animationFrameRef.current = null;
       }
     };
 
-    animationFrameId = requestAnimationFrame(animate);
-    
-    return () => {
-      console.log('Cleaning up animation');
-      cancelAnimationFrame(animationFrameId);
-    };
-  };
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, [isRolling, diceType, settings]);
+
+  // 缓动函数
+  function getEasedProgress(t: number, easingType: string): number {
+    switch (easingType) {
+      case 'quadratic':
+        return t * (2 - t); // Ease Out Quad
+      case 'exponential':
+        return 1 - Math.pow(2, -10 * t); // Ease Out Expo
+      case 'sine':
+        return Math.sin(t * Math.PI / 2); // Ease Out Sine
+      case 'linear':
+      default:
+        return t; // Linear
+    }
+  }
+
+  const diceColor = getDiceColor(diceType);
+  const shouldHideButton = isRolling && settings.buttonAnimation === 'hide';
+  const shouldMoveButton = isRolling && settings.buttonAnimation === 'move';
 
   return (
     <div className={cn(
@@ -144,26 +146,18 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.2 }}
-                  className={cn(
-                    "text-8xl font-orbitron font-bold",
-                    diceType === 4 ? 'text-[#3b82f6]' : 
-                    diceType === 6 ? 'text-[#10b981]' : 
-                    diceType === 16 ? 'text-[#ec4899]' : 'text-[#f97316]'
-                  )}
+                  className="text-8xl font-orbitron font-bold"
+                  style={{ color: diceColor }}
                 >
-                  {rollingNumbers[currentIndex] || rollingNumbers[0]}
+                  {rollingNumbers[currentIndex] ?? rollingNumbers[0]}
                 </motion.div>
               ) : result !== null && (
                 <motion.div
                   key="result"
                   initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className={cn(
-                    "text-8xl font-orbitron font-bold",
-                    diceType === 4 ? 'text-[#3b82f6]' : 
-                    diceType === 6 ? 'text-[#10b981]' : 
-                    diceType === 16 ? 'text-[#ec4899]' : 'text-[#f97316]'
-                  )}
+                  className="text-8xl font-orbitron font-bold"
+                  style={{ color: diceColor }}
                 >
                   {result}
                 </motion.div>
@@ -173,51 +167,48 @@ export default function Home() {
 
           <div className="w-full max-w-md space-y-4 relative">
             <div className="flex justify-between items-center">
-               <motion.div
-                  className={cn(
-                    "flex-1 flex justify-center",
-                    isRolling && settings.buttonAnimation === 'hide' && "hidden"
-                  )}
-                  style={isRolling && settings.buttonAnimation === 'hide' ? { display: 'none' } : {}}
-                 animate={isRolling && settings.buttonAnimation === 'move' ? { x: -150 } : { x: 0 }}
-                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-               >
-                 <button
-                   onClick={rollDice}
-                   disabled={isRolling}
-                   className={cn(
-                     "px-8 py-4 rounded-full font-orbitron text-xl",
-                     "bg-gradient-to-r from-[#00F5FF] to-[#00FF9D]",
-                     "hover:from-[#00FF9D] hover:to-[#FF00F5]",
-                     "transition-all duration-300 hover:scale-105",
-                     "active:scale-95 active:shadow-inner",
-                     "disabled:opacity-50 disabled:cursor-not-allowed",
-                     "relative overflow-hidden flex items-center justify-center gap-2",
-                     isRolling && settings.buttonAnimation === 'hide' && "hidden"
-                   )}
-                 >
-                   {isRolling ? (
-                     <>
-                       <motion.div
-                         animate={{ rotate: 360 }}
-                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                         className="text-xl"
-                       >
-                         <i className="fas fa-spinner"></i>
-                       </motion.div>
-                       {t('common.rolling')}
-                     </>
-                   ) : t('common.rollDice')}
-                   <span className="absolute inset-0 rounded-full shadow-[0_0_15px_5px_rgba(0,245,255,0.5)] animate-pulse"></span>
-                 </button>
-               </motion.div>
-               
-               <button 
-                 onClick={() => navigate('/settings')}
-                 className="p-3 text-[#00F5FF] hover:text-[#00FF9D] transition-colors"
-               >
-                 <i className="fas fa-cog text-xl"></i>
-               </button>
+              {!shouldHideButton && (
+                <motion.div
+                  className="flex-1 flex justify-center"
+                  animate={shouldMoveButton ? { x: -150 } : { x: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <button
+                    onClick={rollDice}
+                    disabled={isRolling}
+                    className={cn(
+                      "px-8 py-4 rounded-full font-orbitron text-xl",
+                      "bg-gradient-to-r from-[#00F5FF] to-[#00FF9D]",
+                      "hover:from-[#00FF9D] hover:to-[#FF00F5]",
+                      "transition-all duration-300 hover:scale-105",
+                      "active:scale-95 active:shadow-inner",
+                      "disabled:opacity-50 disabled:cursor-not-allowed",
+                      "relative overflow-hidden flex items-center justify-center gap-2"
+                    )}
+                  >
+                    {isRolling ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="text-xl"
+                        >
+                          <i className="fas fa-spinner"></i>
+                        </motion.div>
+                        {t('common.rolling')}
+                      </>
+                    ) : t('common.rollDice')}
+                    <span className="absolute inset-0 rounded-full shadow-[0_0_15px_5px_rgba(0,245,255,0.5)] animate-pulse"></span>
+                  </button>
+                </motion.div>
+              )}
+              
+              <button 
+                onClick={() => navigate('/settings')}
+                className="p-3 text-[#00F5FF] hover:text-[#00FF9D] transition-colors"
+              >
+                <i className="fas fa-cog text-xl"></i>
+              </button>
             </div>
   
             {isRolling && (
@@ -230,10 +221,10 @@ export default function Home() {
                 <motion.div 
                   className="h-2.5 rounded-full bg-gradient-to-r from-[#00F5FF] to-[#FF00F5]"
                   initial={{ width: 0 }}
-                   animate={{ width: "100%" }}
-                   transition={{ duration: settings.rollDuration, ease: "linear" }}
-                 />
-               </motion.div>
+                  animate={{ width: "100%" }}
+                  transition={{ duration: settings.rollDuration, ease: "linear" }}
+                />
+              </motion.div>
             )}
           </div>
 

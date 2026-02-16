@@ -5,20 +5,21 @@ import { cn } from '@/lib/utils';
 import { DEFAULT_SETTINGS } from '@/lib/diceUtils';
 import { useI18n } from '@/i18n/useI18n';
 
+type SettingsType = typeof DEFAULT_SETTINGS;
+
 export default function Settings() {
   const navigate = useNavigate();
   const { t, locale, setLocale } = useI18n();
 
-  const [settings, setSettings] = useState(() => {
+  const [settings, setSettings] = useState<SettingsType>(() => {
     const savedSettings = localStorage.getItem('diceSettings');
     return savedSettings ? JSON.parse(savedSettings) : DEFAULT_SETTINGS;
   });
   const [rollDuration, setRollDuration] = useState<string | number>(settings.rollDuration);
   const [durationError, setDurationError] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const newSettings = {
+    const newSettings: SettingsType = {
       ...settings,
       rollDuration: typeof rollDuration === 'string' ? 
                    (rollDuration === '' ? DEFAULT_SETTINGS.rollDuration : parseInt(rollDuration)) : 
@@ -27,40 +28,21 @@ export default function Settings() {
     localStorage.setItem('diceSettings', JSON.stringify(newSettings));
   }, [settings, rollDuration]);
 
-
-
-  const handleIntensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSettings = {
-      ...settings,
-      particleIntensity: parseInt(e.target.value)
-    };
-    setSettings(newSettings);
-  };
-
-  const handleButtonAnimationChange = (value: string) => {
-    const newSettings = {
-      ...settings,
-      buttonAnimation: value
-    };
-    setSettings(newSettings);
+  const handleButtonAnimationChange = (value: 'move' | 'hide') => {
+    setSettings(prev => ({ ...prev, buttonAnimation: value }));
   };
 
   const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setIsEditing(true);
     
     if (!value) {
       setDurationError('');
+      setRollDuration('');
       return;
     }
 
     const num = parseInt(value);
-    if (isNaN(num)) {
-      setDurationError(t('errors.invalidInteger'));
-      return;
-    }
-
-    if (num < 1 || num > 10) {
+    if (isNaN(num) || num < 1 || num > 10) {
       setDurationError(t('errors.invalidInteger'));
       return;
     }
@@ -70,7 +52,6 @@ export default function Settings() {
   };
 
   const handleDurationBlur = () => {
-    setIsEditing(false);
     if (!rollDuration) {
       setDurationError(t('errors.enterRollTime'));
     }
@@ -78,6 +59,10 @@ export default function Settings() {
 
   const handleLanguageChange = (lang: 'zh-CN' | 'en-US') => {
     setLocale(lang);
+  };
+
+  const handleEasingTypeChange = (easingType: SettingsType['easingType']) => {
+    setSettings(prev => ({ ...prev, easingType }));
   };
 
   return (
@@ -149,8 +134,6 @@ export default function Settings() {
             </div>
           </motion.div>
 
-
-
           {/* Button Animation */}
           <motion.div 
             whileHover={{ scale: 1.02 }}
@@ -166,28 +149,28 @@ export default function Settings() {
                 <p className="text-gray-400">{t('common.chooseButtonBehavior')}</p>
               </div>
               <div className="flex flex-col gap-3">
-                 <label className="flex items-center gap-3 cursor-pointer">
-                   <input 
-                     type="radio" 
-                     name="buttonAnimation" 
-                     value="move" 
-                     checked={settings.buttonAnimation === 'move'}
-                     onChange={() => handleButtonAnimationChange('move')}
-                     className="accent-[#00F5FF]"
-                   />
-                   <span>{t('common.moveButton')}</span>
-                 </label>
-                 <label className="flex items-center gap-3 cursor-pointer">
-                   <input 
-                     type="radio" 
-                     name="buttonAnimation" 
-                     value="hide" 
-                     checked={settings.buttonAnimation === 'hide'}
-                     onChange={() => handleButtonAnimationChange('hide')}
-                     className="accent-[#00F5FF]"
-                   />
-                   <span>{t('common.hideButton')}</span>
-                 </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="buttonAnimation" 
+                    value="move" 
+                    checked={settings.buttonAnimation === 'move'}
+                    onChange={() => handleButtonAnimationChange('move')}
+                    className="accent-[#00F5FF]"
+                  />
+                  <span>{t('common.moveButton')}</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="buttonAnimation" 
+                    value="hide" 
+                    checked={settings.buttonAnimation === 'hide'}
+                    onChange={() => handleButtonAnimationChange('hide')}
+                    className="accent-[#00F5FF]"
+                  />
+                  <span>{t('common.hideButton')}</span>
+                </label>
               </div>
             </div>
           </motion.div>
@@ -207,67 +190,53 @@ export default function Settings() {
                 <p className="text-gray-400">{t('common.chooseEasingType')}</p>
               </div>
               <div className="flex flex-col gap-3">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="easingType" 
-                      value="linear" 
-                      checked={settings.easingType === 'linear'}
-                      onChange={() => {
-                        const newSettings = {...settings, easingType: 'linear'};
-                        setSettings(newSettings);
-                      }}
-                      className="accent-[#00F5FF]"
-                    />
-                    <span>线性减速</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="easingType" 
-                      value="quadratic" 
-                      checked={settings.easingType === 'quadratic'}
-                      onChange={() => {
-                        const newSettings = {...settings, easingType: 'quadratic'};
-                        setSettings(newSettings);
-                      }}
-                      className="accent-[#00F5FF]"
-                    />
-                    <span>{t('common.quadratic')}</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="easingType" 
-                      value="exponential" 
-                      checked={settings.easingType === 'exponential'}
-                      onChange={() => {
-                        const newSettings = {...settings, easingType: 'exponential'};
-                        setSettings(newSettings);
-                      }}
-                      className="accent-[#00F5FF]"
-                    />
-                    <span>{t('common.exponential')}</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="easingType" 
-                      value="sine" 
-                      checked={settings.easingType === 'sine'}
-                      onChange={() => {
-                        const newSettings = {...settings, easingType: 'sine'};
-                        setSettings(newSettings);
-                      }}
-                      className="accent-[#00F5FF]"
-                    />
-                    <span>{t('common.sine')}</span>
-                  </label>
-               </div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="easingType" 
+                    value="linear" 
+                    checked={settings.easingType === 'linear'}
+                    onChange={() => handleEasingTypeChange('linear')}
+                    className="accent-[#00F5FF]"
+                  />
+                  <span>{t('common.linear')}</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="easingType" 
+                    value="quadratic" 
+                    checked={settings.easingType === 'quadratic'}
+                    onChange={() => handleEasingTypeChange('quadratic')}
+                    className="accent-[#00F5FF]"
+                  />
+                  <span>{t('common.quadratic')}</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="easingType" 
+                    value="exponential" 
+                    checked={settings.easingType === 'exponential'}
+                    onChange={() => handleEasingTypeChange('exponential')}
+                    className="accent-[#00F5FF]"
+                  />
+                  <span>{t('common.exponential')}</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="easingType" 
+                    value="sine" 
+                    checked={settings.easingType === 'sine'}
+                    onChange={() => handleEasingTypeChange('sine')}
+                    className="accent-[#00F5FF]"
+                  />
+                  <span>{t('common.sine')}</span>
+                </label>
+              </div>
             </div>
           </motion.div>
-
-
 
           {/* Roll duration setting */}
           <motion.div 
@@ -283,38 +252,30 @@ export default function Settings() {
                 <h3 className="font-orbitron text-lg text-[#00FF9D]">{t('common.rollDuration')}</h3>
                 <p className="text-gray-400">{t('common.setRollDuration')}</p>
               </div>
-               <div className="space-y-2">
-                 <input
-                   type="text"
-                   inputMode="numeric"
-                   pattern="[1-9]|10"
-                   value={rollDuration}
-                   onChange={(e) => {
-                     const value = e.target.value;
-                     setIsEditing(true);
-                     if (value === '' || /^[1-9][0-9]?$/.test(value)) {
-                       setDurationError('');
-                       setRollDuration(value === '' ? '' : parseInt(value));
-                     }
-                   }}
-                   onKeyDown={(e) => {
-                     if (e.key === 'Enter') {
-                       e.currentTarget.blur();
-                     }
-                   }}
-                   onBlur={handleDurationBlur}
-                   className={cn(
-                     "w-full px-4 py-2 rounded-lg font-orbitron",
-                     "bg-[#1E1E1E] border border-[#00F5FF]/30",
-                     "focus:outline-none focus:ring-2 focus:ring-[#00F5FF]",
-                     durationError && "border-red-500"
-                   )}
-                 />
-
-                 {durationError && (
-                   <p className="text-red-500 text-sm">{durationError}</p>
-                 )}
-               </div>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[1-9]|10"
+                  value={rollDuration}
+                  onChange={handleDurationChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  onBlur={handleDurationBlur}
+                  className={cn(
+                    "w-full px-4 py-2 rounded-lg font-orbitron",
+                    "bg-[#1E1E1E] border border-[#00F5FF]/30",
+                    "focus:outline-none focus:ring-2 focus:ring-[#00F5FF]",
+                    durationError && "border-red-500"
+                  )}
+                />
+                {durationError && (
+                  <p className="text-red-500 text-sm">{durationError}</p>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>

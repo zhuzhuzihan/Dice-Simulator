@@ -3,7 +3,6 @@ import zhCN from '@/i18n/locales/zh-CN';
 import enUS from '@/i18n/locales/en-US';
 
 type Locale = 'zh-CN' | 'en-US';
-type Translations = typeof zhCN;
 
 interface I18nContextType {
   locale: Locale;
